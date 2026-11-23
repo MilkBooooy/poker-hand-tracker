@@ -1,0 +1,180 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#101827">
+<title>Poker Hand Tracker</title>
+<style>
+:root{--bg:#101827;--panel:#1c293d;--panel2:#26364e;--line:#34445c;--text:#f4f7fb;--muted:#aab7c9;--green:#56d39a;--red:#ff777d;--blue:#75baff;--gold:#f2c879}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;padding-bottom:calc(28px + env(safe-area-inset-bottom))}
+header{position:sticky;top:0;z-index:5;background:#101827ee;backdrop-filter:blur(12px);padding:calc(12px + env(safe-area-inset-top)) 16px 12px;border-bottom:1px solid var(--line)}
+.headrow{display:flex;align-items:center;justify-content:space-between;gap:10px}.brand{font-weight:800;font-size:18px;letter-spacing:.2px}.brand span{color:var(--green)}.sub{font-size:11px;color:var(--muted);margin-top:3px}
+nav{display:flex;gap:8px;margin-top:12px}nav button{flex:1;border:1px solid var(--line);background:var(--panel);color:var(--muted);padding:10px 8px;border-radius:11px;font-weight:700}nav button.active{background:var(--green);border-color:var(--green);color:#10231c}
+main{max-width:760px;margin:auto;padding:14px 13px}.page{display:none}.page.active{display:block}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:14px;margin-bottom:12px}.card h2{font-size:16px;margin:0 0 12px}.sectionhead{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+label{display:block;font-size:12px;color:var(--muted);margin:0 0 6px;font-weight:650}
+input,select,textarea{width:100%;background:#111d2e;color:var(--text);border:1px solid var(--line);border-radius:10px;padding:12px;font-size:16px;min-width:0;outline:none}
+input:focus,select:focus,textarea:focus{border-color:var(--green)}textarea{min-height:76px;resize:vertical}
+.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.grid3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}.field{min-width:0}.muted{color:var(--muted);font-size:12px}.btn{border:0;border-radius:11px;padding:12px 14px;background:var(--green);color:#10231c;font-weight:800;font-size:14px}.btn.secondary{background:var(--panel2);color:var(--text);border:1px solid var(--line)}.btn.danger{background:#512d3a;color:#ffd9dc}.btn.small{padding:8px 10px;font-size:12px}.actions{display:flex;gap:8px;flex-wrap:wrap}.actions>*{flex:1}
+.cardrow{display:flex;gap:7px}.playing-card{flex:1;min-width:0;text-align:center;background:#f5f5f2;color:#172033;border-radius:10px;padding:10px 3px;font-size:19px;font-weight:800;border:2px solid transparent}.playing-card.red{color:#d7434d}.playing-card input{padding:8px 2px;background:transparent;border:0;color:inherit;text-align:center;font-weight:800}
+.street{border:1px solid var(--line);border-radius:13px;padding:12px;margin-top:10px}.streettitle{display:flex;align-items:center;justify-content:space-between;margin-bottom:9px;font-weight:800}.board{display:flex;gap:6px;margin-bottom:10px}.board input{padding:9px 2px;text-align:center;background:#f5f5f2;color:#172033;font-weight:800}.board input.red{color:#d7434d}
+.actionrow{display:grid;grid-template-columns:1.05fr 1fr .85fr 34px;gap:6px;align-items:end;margin:8px 0}.actionrow select,.actionrow input{padding:10px 7px;font-size:14px}.remove{height:40px;border:1px solid var(--line);border-radius:9px;background:#3a2937;color:#ffb5ba;font-size:18px}
+.playerrow{display:grid;grid-template-columns:1.2fr .8fr .8fr 34px;gap:6px;margin:8px 0;align-items:end}.playerrow input,.playerrow select{padding:10px 7px;font-size:14px}
+.summary{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.stat{background:#111d2e;padding:11px;border-radius:11px}.stat b{display:block;font-size:18px;margin-top:4px}.positive{color:var(--green)}.negative{color:var(--red)}
+.handitem{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:13px;margin-bottom:9px}.handtop{display:flex;justify-content:space-between;gap:10px}.handtitle{font-weight:800}.handmeta{color:var(--muted);font-size:12px;margin-top:5px}.tag{font-size:11px;border-radius:20px;padding:4px 8px;background:var(--panel2);color:var(--muted);white-space:nowrap}.empty{text-align:center;padding:35px 12px;color:var(--muted)}
+.notice{background:#183b35;border:1px solid #286b59;color:#c7f6e3;padding:11px;border-radius:11px;font-size:12px;line-height:1.5;margin-bottom:12px}
+#toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#f4f7fb;color:#152235;padding:11px 16px;border-radius:30px;font-weight:700;font-size:13px;display:none;z-index:30;box-shadow:0 6px 25px #0008}
+.cardpick{width:100%;border:1px solid var(--line);border-radius:11px;background:#111d2e;color:var(--text);padding:13px 8px;font-size:18px;font-weight:850;min-height:50px}
+.cardpick.red{color:#ff777d;background:#f5f5f2}.cardpick.black{color:#172033;background:#f5f5f2}
+.boardpick{flex:1;min-width:0;padding:10px 3px;background:#f5f5f2;color:#172033}
+.quickactions{display:flex;gap:6px;overflow-x:auto;padding:2px 0 9px;scrollbar-width:none}.quickactions button{flex:0 0 auto;border:1px solid var(--line);border-radius:9px;padding:8px 11px;background:#111d2e;color:var(--text);font-weight:750;font-size:12px}
+.modalback{position:fixed;inset:0;background:#000b;z-index:40;display:none;align-items:flex-end;justify-content:center;padding:12px}.modalback.open{display:flex}.modal{width:min(100%,560px);background:var(--panel);border:1px solid var(--line);border-radius:18px 18px 14px 14px;padding:16px;max-height:85vh;overflow:auto}.modalhead{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}.ranks{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;margin-bottom:12px}.ranks button,.suits button{padding:12px 2px;border:1px solid var(--line);border-radius:9px;background:#111d2e;color:var(--text);font-weight:800}.ranks button.selected{background:var(--green);color:#10231c}.suits{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}.suits button{font-size:22px;background:#f5f5f2;color:#172033}.suits button.red{color:#d7434d}.suits button:disabled{opacity:.25}
+@media(min-width:600px){main{padding:22px}.card{padding:18px}.actionrow{grid-template-columns:1.2fr 1fr 1fr 40px}}
+</style>
+</head>
+<body>
+<header>
+ <div class="headrow"><div><div class="brand">♠ Poker <span>Hand Tracker</span></div><div class="sub">LIVE CASH GAME · HAND LOG</div></div><div class="tag" id="countTag">0 HANDS</div></div>
+ <nav><button class="active" data-tab="editor">＋ 記録する</button><button data-tab="history">履歴一覧</button><button data-tab="backup">設定・保存</button></nav>
+</header>
+<main>
+<section class="page active" id="editor">
+ <div class="notice">卓を離れた後に、思い出せる範囲で入力すればOK。入力内容はこのiPhoneのブラウザ内に自動保存されます。</div>
+ <form id="handForm">
+  <div class="card">
+   <h2>① セッション情報</h2>
+   <div class="grid">
+    <div class="field"><label>日時</label><input type="datetime-local" id="playedAt"></div>
+    <div class="field"><label>ゲーム形式</label><select id="game"><option>NLH Cash</option><option>PLO Cash</option><option>その他</option></select></div>
+    <div class="field"><label>ブラインド（SB）</label><input id="sb" type="number" step="0.01" value="1" placeholder="例 1"></div>
+    <div class="field"><label>ブラインド（BB）</label><input id="bb" type="number" step="0.01" value="3" placeholder="例 3"></div>
+    <div class="field"><label>通貨・単位</label><input id="currency" value="bb" placeholder="bb / 円 / ₩"></div>
+    <div class="field"><label>テーブル人数</label><select id="tableSize"><option>6-max</option><option>9-max</option><option> heads-up</option><option>その他</option></select></div>
+   </div>
+  </div>
+  <div class="card">
+   <h2>② 自分の情報</h2>
+   <div class="grid">
+    <div class="field"><label>ポジション</label><select id="heroPos"><option>BTN</option><option>SB</option><option>BB</option><option>UTG</option><option>UTG+1</option><option>MP</option><option>HJ</option><option>CO</option><option>その他</option></select></div>
+    <div class="field"><label>開始スタック（bb）</label><input id="heroStack" type="number" step=".1" placeholder="例 100"></div>
+   </div>
+   <div style="margin-top:12px"><label>自分のホールカード</label><div class="grid"><button type="button" class="cardpick" data-target="heroCard1" id="pickHero1">＋ 1枚目を選択</button><button type="button" class="cardpick" data-target="heroCard2" id="pickHero2">＋ 2枚目を選択</button></div><input id="heroCard1" type="hidden"><input id="heroCard2" type="hidden"><div class="muted" style="margin-top:5px">カードをタップして選択。52枚から選べます。</div></div>
+  </div>
+  <div class="card">
+   <div class="sectionhead"><h2 style="margin:0">③ プレイヤー</h2><button type="button" class="btn secondary small" id="addPlayer">＋ 追加</button></div>
+   <div class="muted">自分以外のプレイヤーを登録。アクション入力で選択できます。</div>
+   <div id="players"></div>
+  </div>
+  <div class="card">
+   <h2>④ ストリート別アクション</h2>
+   <div class="muted">よく使うアクションはボタンで追加。金額やプレイヤーを変える場合だけ詳細入力。金額はbb単位。</div>
+   <div class="street">
+    <div class="streettitle">Preflop <span class="tag">プリフロップ</span></div>
+    <div class="quickactions" data-street="preflop"><button type="button" data-action="Fold">Fold</button><button type="button" data-action="Check">Check</button><button type="button" data-action="Call">Call</button><button type="button" data-action="Bet">Bet</button><button type="button" data-action="Raise">Raise</button><button type="button" data-action="3bet">3bet</button><button type="button" data-action="4bet">4bet</button><button type="button" data-action="All-in">All-in</button></div><div id="preflopActions"></div><button type="button" class="btn secondary small addAction" data-street="preflop">＋ 詳細入力</button>
+   </div>
+   <div class="street">
+    <div class="streettitle">Flop <span class="tag">フロップ</span></div>
+    <div class="board"><button type="button" class="cardpick boardpick" data-target="flop1" id="pickflop1">＋</button><button type="button" class="cardpick boardpick" data-target="flop2" id="pickflop2">＋</button><button type="button" class="cardpick boardpick" data-target="flop3" id="pickflop3">＋</button></div><input type="hidden" id="flop1"><input type="hidden" id="flop2"><input type="hidden" id="flop3">
+    <div class="quickactions" data-street="flop"><button type="button" data-action="Fold">Fold</button><button type="button" data-action="Check">Check</button><button type="button" data-action="Call">Call</button><button type="button" data-action="Bet">Bet</button><button type="button" data-action="Raise">Raise</button><button type="button" data-action="3bet">3bet</button><button type="button" data-action="4bet">4bet</button><button type="button" data-action="All-in">All-in</button></div><div id="flopActions"></div><button type="button" class="btn secondary small addAction" data-street="flop">＋ 詳細入力</button>
+   </div>
+   <div class="street">
+    <div class="streettitle">Turn <span class="tag">ターン</span></div>
+    <div class="board"><button type="button" class="cardpick boardpick" data-target="turn1" id="pickturn1">＋ ターンを選択</button></div><input type="hidden" id="turn1">
+    <div class="quickactions" data-street="turn"><button type="button" data-action="Fold">Fold</button><button type="button" data-action="Check">Check</button><button type="button" data-action="Call">Call</button><button type="button" data-action="Bet">Bet</button><button type="button" data-action="Raise">Raise</button><button type="button" data-action="3bet">3bet</button><button type="button" data-action="4bet">4bet</button><button type="button" data-action="All-in">All-in</button></div><div id="turnActions"></div><button type="button" class="btn secondary small addAction" data-street="turn">＋ 詳細入力</button>
+   </div>
+   <div class="street">
+    <div class="streettitle">River <span class="tag">リバー</span></div>
+    <div class="board"><button type="button" class="cardpick boardpick" data-target="river1" id="pickriver1">＋ リバーを選択</button></div><input type="hidden" id="river1">
+    <div class="quickactions" data-street="river"><button type="button" data-action="Fold">Fold</button><button type="button" data-action="Check">Check</button><button type="button" data-action="Call">Call</button><button type="button" data-action="Bet">Bet</button><button type="button" data-action="Raise">Raise</button><button type="button" data-action="3bet">3bet</button><button type="button" data-action="4bet">4bet</button><button type="button" data-action="All-in">All-in</button></div><div id="riverActions"></div><button type="button" class="btn secondary small addAction" data-street="river">＋ 詳細入力</button>
+   </div>
+  </div>
+  <div class="card">
+   <h2>⑤ ショーダウン・結果</h2>
+   <div class="grid">
+    <div class="field"><label>ショーダウン</label><select id="showdown"><option>あり</option><option>なし（相手フォールド）</option><option>不明</option></select></div>
+    <div class="field"><label>勝敗</label><select id="outcome"><option>勝ち</option><option>負け</option><option>チョップ</option><option>不明</option></select></div>
+    <div class="field"><label>最終収支（bb）</label><input id="result" type="number" step=".01" placeholder="例：+67.33 / -20"></div>
+    <div class="field"><label>ポットサイズ（bb）</label><input id="pot" type="number" step=".01" placeholder="例：141.66"></div>
+   </div>
+   <div style="margin-top:12px"><label>相手の公開ハンド（任意）</label><input id="villainHand" placeholder="例：K♦ J♦ / AA"></div>
+   <div style="margin-top:12px"><label>ハンドメモ・考えたこと</label><textarea id="notes" placeholder="例：リバーのベットに対して、相手のブラフレンジをどう考えたか。"></textarea></div>
+  </div>
+  <div class="actions"><button class="btn" type="submit" id="saveBtn">このハンドを保存</button><button class="btn secondary" type="button" id="resetBtn">入力をリセット</button></div>
+ </form>
+</section>
+<section class="page" id="history">
+ <div class="card">
+  <div class="sectionhead"><h2 style="margin:0">ハンド履歴</h2><span class="tag" id="historyCount">0件</span></div>
+  <input id="search" placeholder="ポジション・カード・メモで検索">
+  <div class="grid" style="margin-top:10px"><select id="filterOutcome"><option value="">すべての結果</option><option>勝ち</option><option>負け</option><option>チョップ</option></select><select id="sort"><option value="new">新しい順</option><option value="old">古い順</option></select></div>
+ </div>
+ <div id="handList"></div>
+</section>
+<section class="page" id="backup">
+ <div class="card">
+  <h2>データの保存について</h2>
+  <p class="muted" style="line-height:1.6">ハンド記録はこのiPhoneのブラウザ内に保存されます。ブラウザのデータ削除や機種変更に備えて、定期的にJSONバックアップをダウンロードしてください。</p>
+  <div class="actions"><button class="btn" id="exportBtn">JSONバックアップを書き出す</button><button class="btn secondary" id="csvBtn">CSVを書き出す</button></div>
+  <div style="margin-top:14px"><label>バックアップファイルを読み込む</label><input type="file" id="importFile" accept=".json,application/json"></div>
+ </div>
+ <div class="card">
+  <h2>記録データ</h2><div class="stat"><span class="muted">保存しているハンド数</span><b id="statHands">0</b></div>
+  <p class="muted" style="margin-top:12px">※全ハンドの収支集計は行いません。各ハンドの結果は、必要な場合だけ個別に記録できます。データはサーバーには送信されません。</p>
+ </div>
+</section>
+</main>
+<div id="toast"></div>
+<div class="modalback" id="cardModal"><div class="modal"><div class="modalhead"><b id="modalTitle">カードを選択</b><button class="btn secondary small" type="button" id="closeCardModal">閉じる</button></div><div class="ranks" id="rankChoices"></div><div class="suits" id="suitChoices"></div></div></div>
+<script>
+const $=id=>document.getElementById(id);
+
+const ranks=['A','K','Q','J','10','9','8','7','6','5','4','3','2'];
+const suits=[{k:'h',v:'♥',red:true},{k:'d',v:'♦',red:true},{k:'c',v:'♣',red:false},{k:'s',v:'♠',red:false}];
+let pickerTarget=null,pickerRank='A';
+function selectedCards(){return ['heroCard1','heroCard2','flop1','flop2','flop3','turn1','river1'].map(id=>$(id).value).filter(Boolean)}
+function cardPretty(code){if(!code)return '';const m=code.match(/^(10|[AKQJ2-9])([hdcs])$/i);if(!m)return code;const s=suits.find(x=>x.k===m[2].toLowerCase());return m[1].toUpperCase()+s.v}
+function paintPickerButton(target){const b=document.querySelector(`[data-target="${target}"]`);if(!b)return;const v=$(target).value;b.textContent=v?cardPretty(v):({heroCard1:'＋ 1枚目を選択',heroCard2:'＋ 2枚目を選択',flop1:'＋',flop2:'＋',flop3:'＋',turn1:'＋ ターンを選択',river1:'＋ リバーを選択'}[target]);b.classList.toggle('red',!!v&&/[hd]$/i.test(v));b.classList.toggle('black',!!v&&/[cs]$/i.test(v))}
+function openPicker(target){pickerTarget=target;pickerRank='A';$('modalTitle').textContent=({heroCard1:'自分の1枚目',heroCard2:'自分の2枚目',flop1:'フロップ 1枚目',flop2:'フロップ 2枚目',flop3:'フロップ 3枚目',turn1:'ターン',river1:'リバー'}[target]||'カードを選択');renderPicker();$('cardModal').classList.add('open')}
+function renderPicker(){const ranksEl=$('rankChoices');ranksEl.innerHTML=ranks.map(r=>`<button type="button" class="${pickerRank===r?'selected':''}">${r}</button>`).join('');[...ranksEl.children].forEach((b,i)=>b.onclick=()=>{pickerRank=ranks[i];renderPicker()});const used=selectedCards().filter(c=>c!==$(pickerTarget).value);$('suitChoices').innerHTML=suits.map(s=>{const code=pickerRank+s.k;return `<button type="button" class="${s.red?'red':''}" ${used.includes(code)?'disabled':''}>${s.v}</button>`}).join('');[...$('suitChoices').children].forEach((b,i)=>b.onclick=()=>{const code=pickerRank+suits[i].k;if(selectedCards().filter(c=>c!==$(pickerTarget).value).includes(code)){toast('同じカードは選べません');return}$(pickerTarget).value=code;paintPickerButton(pickerTarget);$('cardModal').classList.remove('open')})}
+document.querySelectorAll('.cardpick').forEach(b=>b.addEventListener('click',()=>openPicker(b.dataset.target)));
+$('closeCardModal').onclick=()=>$('cardModal').classList.remove('open');
+$('cardModal').addEventListener('click',e=>{if(e.target===$('cardModal'))$('cardModal').classList.remove('open')});
+document.querySelectorAll('.quickactions button').forEach(b=>b.onclick=()=>{const street=b.parentElement.dataset.street;addAction(street,{action:b.dataset.action})});
+
+const KEY='poker-hand-tracker-v1';
+let hands=JSON.parse(localStorage.getItem(KEY)||'[]'),editingId=null;
+const streets=['preflop','flop','turn','river'];
+const streetLabels={preflop:'Preflop',flop:'Flop',turn:'Turn',river:'River'};
+function nowLocal(){const d=new Date();d.setMinutes(d.getMinutes()-d.getTimezoneOffset());return d.toISOString().slice(0,16)}
+$('playedAt').value=nowLocal();
+function toast(t){const e=$('toast');e.textContent=t;e.style.display='block';setTimeout(()=>e.style.display='none',2200)}
+function saveStore(){localStorage.setItem(KEY,JSON.stringify(hands));renderAll()}
+function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+function playerNames(){return [...document.querySelectorAll('.player-name')].map((x,i)=>x.value.trim()||`Player ${i+1}`)}
+function addPlayer(data={}){const wrap=document.createElement('div');wrap.className='playerrow';wrap.innerHTML=`<div><label>名前</label><input class="player-name" placeholder="例：Villain 1" value="${esc(data.name||'')}"></div><div><label>ポジション</label><select class="player-pos">${['UTG','UTG+1','MP','HJ','CO','BTN','SB','BB','その他'].map(p=>`<option ${data.pos===p?'selected':''}>${p}</option>`).join('')}</select></div><div><label>開始スタック</label><input class="player-stack" type="number" step=".1" placeholder="bb" value="${esc(data.stack||'')}"></div><button type="button" class="remove" aria-label="削除">×</button>`;wrap.querySelector('.remove').onclick=()=>{wrap.remove();refreshActors()};$('players').append(wrap);refreshActors()}
+function refreshActors(){document.querySelectorAll('.action-actor').forEach(sel=>{const old=sel.value;sel.innerHTML=['自分',...playerNames()].map(n=>`<option>${esc(n)}</option>`).join('');if([...sel.options].some(o=>o.value===old))sel.value=old})}
+function addAction(street,data={}){const box=document.createElement('div');box.className='actionrow';box.innerHTML=`<div><label>プレイヤー</label><select class="action-actor"><option>自分</option></select></div><div><label>アクション</label><select class="action-type">${['Fold','Check','Call','Bet','Raise','3bet','4bet','All-in','その他'].map(a=>`<option ${data.action===a?'selected':''}>${a}</option>`).join('')}</select></div><div><label>金額（bb）</label><input class="action-amount" type="number" step=".01" placeholder="任意" value="${esc(data.amount??'')}"></div><button type="button" class="remove">×</button>`;box.querySelector('.remove').onclick=()=>box.remove();$(street+'Actions').append(box);refreshActors();if(data.actor)box.querySelector('.action-actor').value=data.actor}
+document.querySelectorAll('.addAction').forEach(b=>b.onclick=()=>addAction(b.dataset.street));
+$('addPlayer').onclick=()=>addPlayer();
+function getActions(street){return [...document.querySelectorAll(`#${street}Actions .actionrow`)].map(r=>({actor:r.querySelector('.action-actor').value,action:r.querySelector('.action-type').value,amount:r.querySelector('.action-amount').value}))}
+function readForm(){return {id:editingId||crypto.randomUUID(),playedAt:$('playedAt').value,game:$('game').value,sb:$('sb').value,bb:$('bb').value,currency:$('currency').value,tableSize:$('tableSize').value,heroPos:$('heroPos').value,heroStack:$('heroStack').value,cards:[$('heroCard1').value,$('heroCard2').value],players:[...document.querySelectorAll('.playerrow')].map(r=>({name:r.querySelector('.player-name').value,pos:r.querySelector('.player-pos').value,stack:r.querySelector('.player-stack').value})),board:{flop:[$('flop1').value,$('flop2').value,$('flop3').value],turn:$('turn1').value,river:$('river1').value},actions:Object.fromEntries(streets.map(s=>[s,getActions(s)])),showdown:$('showdown').value,outcome:$('outcome').value,result:$('result').value,pot:$('pot').value,villainHand:$('villainHand').value,notes:$('notes').value,updatedAt:new Date().toISOString()}}
+$('handForm').onsubmit=e=>{e.preventDefault();const h=readForm();if(!h.cards[0]||!h.cards[1]){toast('自分のホールカードを入力してください');return}if(editingId){hands=hands.map(x=>x.id===editingId?h:x)}else hands.unshift(h);saveStore();toast('ハンドを保存しました');resetForm();showTab('history')};
+function resetForm(){editingId=null;$('handForm').reset();['heroCard1','heroCard2','flop1','flop2','flop3','turn1','river1'].forEach(paintPickerButton);$('playedAt').value=nowLocal();$('sb').value=1;$('bb').value=3;$('currency').value='bb';$('players').innerHTML='';streets.forEach(s=>$(s+'Actions').innerHTML='');$('saveBtn').textContent='このハンドを保存';}
+$('resetBtn').onclick=()=>{if(confirm('入力内容をリセットしますか？'))resetForm()};
+function showTab(tab){document.querySelectorAll('nav button').forEach(b=>b.classList.toggle('active',b.dataset.tab===tab));document.querySelectorAll('.page').forEach(p=>p.classList.toggle('active',p.id===tab));if(tab==='history')renderHistory()}
+document.querySelectorAll('nav button').forEach(b=>b.onclick=()=>showTab(b.dataset.tab));
+function cardText(c){return c||'—'}
+function renderHistory(){const q=$('search').value.toLowerCase(),f=$('filterOutcome').value;let arr=[...hands].filter(h=>(!f||h.outcome===f)&&JSON.stringify(h).toLowerCase().includes(q));arr.sort((a,b)=>$('sort').value==='new'?b.playedAt.localeCompare(a.playedAt):a.playedAt.localeCompare(b.playedAt));$('historyCount').textContent=arr.length+'件';$('handList').innerHTML=arr.length?arr.map(h=>`<div class="handitem"><div class="handtop"><div><div class="handtitle">${esc(h.heroPos)} · ${esc(h.cards.join(' '))}</div><div class="handmeta">${esc((h.playedAt||'').replace('T',' '))} · ${esc(h.game)} · ${esc(h.bb)}bb</div></div><div class="${Number(h.result)>=0?'positive':'negative'}" style="font-weight:800">${Number(h.result)>0?'+':''}${esc(h.result||'—')} bb</div></div><div class="handmeta">Board: ${esc([...h.board.flop,h.board.turn,h.board.river].filter(Boolean).join(' ' )||'未入力')} · ${esc(h.outcome||'')}</div><div class="actions" style="margin-top:10px"><button class="btn secondary small" onclick="viewHand('${h.id}')">詳細</button><button class="btn secondary small" onclick="editHand('${h.id}')">編集</button><button class="btn danger small" onclick="deleteHand('${h.id}')">削除</button></div></div>`).join(''):'<div class="empty">まだハンドがありません。<br>「記録する」から最初のハンドを登録しましょう。</div>'}
+['search','filterOutcome','sort'].forEach(id=>$(id).addEventListener('input',renderHistory));
+function viewHand(id){const h=hands.find(x=>x.id===id);if(!h)return;const acts=streets.map(s=>`<b>${streetLabels[s]}</b><br>${(h.actions[s]||[]).map(a=>`${esc(a.actor)} ${esc(a.action)} ${a.amount?esc(a.amount)+'bb':''}`).join('<br>')||'—'}`).join('<br><br>');alert(`${h.heroPos} ${h.cards.join(' ')}\n${h.playedAt}\nBoard: ${[...h.board.flop,h.board.turn,h.board.river].filter(Boolean).join(' ')}\n\n${h.players.map(p=>p.pos+' '+p.name).join('\\n')}\n\n${acts.replace(/<br>/g,'\\n').replace(/<[^>]*>/g,'')}\n\n結果：${h.outcome} / ${h.result}bb\nメモ：${h.notes||'なし'}`)}
+function editHand(id){const h=hands.find(x=>x.id===id);if(!h)return;resetForm();editingId=id;const fields=['playedAt','game','sb','bb','currency','tableSize','heroPos','heroStack','showdown','outcome','result','pot','villainHand','notes'];fields.forEach(k=>$(k).value=h[k]??'');$('heroCard1').value=h.cards[0]||'';$('heroCard2').value=h.cards[1]||'';['heroCard1','heroCard2'].forEach(paintPickerButton);h.players.forEach(addPlayer);$('flop1').value=h.board.flop[0]||'';$('flop2').value=h.board.flop[1]||'';$('flop3').value=h.board.flop[2]||'';$('turn1').value=h.board.turn||'';$('river1').value=h.board.river||'';['flop1','flop2','flop3','turn1','river1'].forEach(paintPickerButton);streets.forEach(s=>(h.actions[s]||[]).forEach(a=>addAction(s,a)));$('saveBtn').textContent='変更を保存';showTab('editor')}
+function deleteHand(id){if(confirm('このハンドを削除しますか？')){hands=hands.filter(h=>h.id!==id);saveStore();toast('削除しました')}}
+function renderAll(){$('countTag').textContent=hands.length+' HANDS';$('statHands').textContent=hands.length;$('historyCount').textContent=hands.length+'件';renderHistory()}
+function download(name,content,type){const a=document.createElement('a'),url=URL.createObjectURL(new Blob([content],{type}));a.href=url;a.download=name;a.click();URL.revokeObjectURL(url)}
+$('exportBtn').onclick=()=>download('poker-hands-backup.json',JSON.stringify(hands,null,2),'application/json');
+$('csvBtn').onclick=()=>{const cols=['playedAt','game','bb','heroPos','heroStack','cards','board','outcome','result','pot','villainHand','notes'];const rows=[cols.join(','),...hands.map(h=>cols.map(c=>{let v=['cards','board'].includes(c)?JSON.stringify(h[c]):h[c]??'';return '"'+String(v).replace(/"/g,'""')+'"'}).join(','))];download('poker-hands.csv','\ufeff'+rows.join('\n'),'text/csv;charset=utf-8')};
+$('importFile').onchange=async e=>{const file=e.target.files[0];if(!file)return;try{const data=JSON.parse(await file.text());if(!Array.isArray(data))throw Error();if(confirm(`${data.length}件のデータを現在の記録に追加しますか？`)){hands=[...data,...hands];saveStore();toast('読み込みました')}}catch{toast('読み込めないファイルです')}e.target.value=''};
+renderAll();addAction('preflop');addAction('flop');addAction('turn');addAction('river');
+</script>
+</body></html>
